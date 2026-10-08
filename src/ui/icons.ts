@@ -32,6 +32,14 @@ export function iconSvg(kind: GestureKind, dir?: Dir): string {
       const arc = '<path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 3v5h-5"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>'
       return svg(dir === 'ccw' ? `<g transform="translate(24 0) scale(-1 1)">${arc}</g>` : arc)
     }
+    case 'square': { // контур со стрелкой на верхней стороне
+      const sh = '<rect x="4.5" y="7" width="15" height="14" rx="1.5"/><path d="M13.5 2.5l4 4.5-4 4.5"/>'
+      return svg(dir === 'ccw' ? `<g transform="translate(24 0) scale(-1 1)">${sh}</g>` : sh)
+    }
+    case 'triangle': {
+      const sh = '<path d="M12 5l8.5 15h-17z"/><path d="M20.5 8.3l-.8 5.1-4.9-1.2"/>'
+      return svg(dir === 'ccw' ? `<g transform="translate(24 0) scale(-1 1)">${sh}</g>` : sh)
+    }
     case 'twist':
       return svg('<path d="M4 7c4-4 12-4 16 0"/><path d="M4 12c4-4 12-4 16 0"/><path d="M4 17c4-4 12-4 16 0"/>')
     case 'push':

@@ -62,6 +62,13 @@ export class TrikiLink {
     await this.ctrl.writeValue(Uint8Array.of(on ? 1 : 0))
   }
 
+  /** Чтение регистра светодиода (документирован как read/write). null, если регистра нет. */
+  async readLed(): Promise<boolean | null> {
+    if (!this.ctrl) return null
+    const v = await this.ctrl.readValue()
+    return v.byteLength ? v.getUint8(0) !== 0 : null
+  }
+
   disconnect(): void {
     if (this.device?.gatt?.connected) this.device.gatt.disconnect()
   }

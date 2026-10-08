@@ -3,7 +3,7 @@ import { iconSvg } from './icons'
 
 const CAT: Record<string, string> = {
   roll: 'var(--z)', spin: 'var(--spin)', twist: 'var(--spin)', flip: 'var(--x)',
-  slide: 'var(--y)', circle: 'var(--y)', push: 'var(--y)', lift: 'var(--lift)', edge: 'var(--muted)', flat: 'var(--muted)', tilt: 'var(--muted)',
+  slide: 'var(--y)', circle: 'var(--y)', square: 'var(--y)', triangle: 'var(--y)', push: 'var(--y)', lift: 'var(--lift)', edge: 'var(--muted)', flat: 'var(--muted)', tilt: 'var(--muted)',
 }
 
 function token(kind: Gesture['kind'], dir: Gesture['dir'], caption: string, title: string): HTMLElement {

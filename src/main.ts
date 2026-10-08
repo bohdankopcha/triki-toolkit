@@ -94,6 +94,8 @@ const link = new TrikiLink({
   },
   onBattery: (p) => ($('bat').textContent = `${p}%`),
   onDisconnect() {
+    led = false
+    model.setLed(false)
     setConnected(false)
     status.textContent = 'Отключено'
   },
@@ -167,6 +169,7 @@ connectBtn.onclick = async () => {
     await link.connect(rate)
     setConnected(true)
     ledBtn.disabled = !link.hasLed
+    link.readLed().then((v) => { if (v !== null) { led = v; model.setLed(v) } }).catch(() => { /* не критично */ })
     status.textContent = 'Подключено, идёт поток. Положите жетон ровно на стол светодиодом ОТ СЕБЯ (в экран) на пару секунд: так выровняются калибровка и направления.'
   } catch (e) {
     setConnected(false)
@@ -190,7 +193,13 @@ rezeroBtn.onclick = () => {
 }
 ledBtn.onclick = async () => {
   led = !led
-  try { await link.setLed(led) } catch (e) { status.textContent = `LED: ${(e as Error).message}` }
+  try {
+    await link.setLed(led)
+    model.setLed(led)
+  } catch (e) {
+    led = !led
+    status.textContent = `LED: ${(e as Error).message}`
+  }
 }
 betaIn.oninput = () => {
   madgwick.beta = Number(betaIn.value)

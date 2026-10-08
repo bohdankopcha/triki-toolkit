@@ -5,7 +5,7 @@ import type { Dir, TrikiEvent } from './analyzer'
  * поворот только 45/90/135/180/270/360/540/720, перемещение только 5/10/20/30 см.
  * Чистая логика (без DOM/BLE): переносится в будущую программу как есть.
  */
-export type GestureKind = 'roll' | 'spin' | 'twist' | 'flip' | 'slide' | 'circle' | 'lift' | 'push' | 'edge' | 'flat' | 'tilt'
+export type GestureKind = 'roll' | 'spin' | 'twist' | 'flip' | 'slide' | 'circle' | 'square' | 'triangle' | 'lift' | 'push' | 'edge' | 'flat' | 'tilt'
 
 export interface Gesture {
   /** стабильный идентификатор для подписки, например "roll.up.90", "flip.up", "slide.upright.10" */
@@ -70,6 +70,16 @@ export class GestureMapper {
         if (!d?.dir || !d.angleDeg) return false
         const loops = Math.min(3, Math.max(1, Math.round(Math.abs(d.angleDeg) / 360)))
         return this.add(make('circle', ev.t, `Круг ${DIR_RU[d.dir]}${loops > 1 ? ` ×${loops}` : ''}`, d.dir, loops))
+      }
+      case 'shape': {
+        if (!d?.shape || !d.dir) return false
+        // штрихи, из которых сложилась фигура, уже ушли в ленту как смещения: убираем их
+        for (let n = (d.strokes ?? 1) - 1; n > 0; n--) {
+          const last = this.list.at(-1)
+          if (last && (last.kind === 'slide' || last.kind === 'push') && ev.t - last.t <= 8) this.list.pop()
+        }
+        const name = d.shape === 'square' ? 'Квадрат' : 'Треугольник'
+        return this.add(make(d.shape, ev.t, `${name} ${DIR_RU[d.dir]}`, d.dir))
       }
       case 'posture':
         return this.posture(ev)
@@ -152,6 +162,8 @@ export const VOCAB: { kind: GestureKind; title: string; dirs: Dir[]; values?: re
   { kind: 'flip', title: 'Переворот (стороной плата/крышка)', dirs: D4 },
   { kind: 'slide', title: 'Смещение по плоскости жетона (светодиод = вверх)', dirs: D8, values: DISTANCES, unit: ' см' },
   { kind: 'circle', title: 'Движение по кругу (вид сверху)', dirs: ['cw', 'ccw'], values: [1, 2, 3], unit: ' кр.' },
+  { kind: 'square', title: 'Квадрат (вид сверху, можно штрихами)', dirs: ['cw', 'ccw'] },
+  { kind: 'triangle', title: 'Треугольник (вид сверху, можно штрихами)', dirs: ['cw', 'ccw'] },
   { kind: 'lift', title: 'Подъём / опускание', dirs: ['up', 'down'], values: DISTANCES, unit: ' см' },
   { kind: 'push', title: 'Смещение вдоль нормали платы (когда жетон не лежит)', dirs: ['out', 'in'], values: DISTANCES, unit: ' см' },
   { kind: 'edge', title: 'Поставлен на ребро', dirs: [] },

@@ -1,5 +1,6 @@
 import {
-  AmbientLight, AxesHelper, Color, DirectionalLight, GridHelper, Group, PerspectiveCamera, Scene, WebGLRenderer,
+  AdditiveBlending, AmbientLight, AxesHelper, CanvasTexture, Color, DirectionalLight, GridHelper, Group, Mesh,
+  MeshBasicMaterial, PerspectiveCamera, PointLight, Scene, SphereGeometry, Sprite, SpriteMaterial, WebGLRenderer,
 } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { Quat } from '../core/quat'
@@ -42,12 +43,27 @@ export function mountModel(el: HTMLElement, url: string) {
   const spin = new Group() // поворот модели вокруг её тонкой оси: подгонка «передней» стороны
   mount.add(spin)
 
+  // Светодиод: белая точка на текстуре платы -> координаты модели через UV (x, y, z). Лежит на верхней грани, у края «верха».
+  const led = new Group()
+  led.position.set(-0.761, 0.262, -0.061)
+  led.visible = false
+  const lens = new Mesh(new SphereGeometry(0.06, 16, 12), new MeshBasicMaterial({ color: 0x7dffa0 }))
+  led.add(lens)
+  const halo = new Sprite(new SpriteMaterial({ map: haloTexture(), color: 0x39ff6a, blending: AdditiveBlending, depthWrite: false, transparent: true }))
+  halo.scale.set(0.9, 0.9, 0.9)
+  led.add(halo)
+  const glow = new PointLight(0x39ff6a, 6, 2.5, 1.5)
+  glow.position.set(0, 0.15, 0)
+  led.add(glow)
+  spin.add(led)
+
   new GLTFLoader().load(url, (gltf) => {
     spin.add(gltf.scene)
     draw()
   }, undefined, (e) => console.error('Не загрузилась модель', e))
 
-  let mountSteps = Number(safeGet('triki.mount') ?? 0)
+  // По умолчанию 1: тогда светодиод модели (по -X модели) приходится на -Y датчика, «над Ż», как на жетоне
+  let mountSteps = Number(safeGet('triki.mount2') ?? 1)
   spin.rotation.y = (mountSteps * Math.PI) / 2
 
   function resize(): void {
@@ -70,13 +86,30 @@ export function mountModel(el: HTMLElement, url: string) {
       pivot.quaternion.set(q[1], q[2], q[3], q[0])
       draw()
     },
+    setLed(on: boolean): void {
+      led.visible = on
+      draw()
+    },
     rotateMount(): void {
       mountSteps = (mountSteps + 1) % 4
       spin.rotation.y = (mountSteps * Math.PI) / 2
-      safeSet('triki.mount', String(mountSteps))
+      safeSet('triki.mount2', String(mountSteps))
       draw()
     },
   }
+}
+
+function haloTexture(): CanvasTexture {
+  const c = document.createElement('canvas')
+  c.width = c.height = 128
+  const g = c.getContext('2d')!
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64)
+  grad.addColorStop(0, 'rgba(255,255,255,1)')
+  grad.addColorStop(0.25, 'rgba(255,255,255,.55)')
+  grad.addColorStop(1, 'rgba(255,255,255,0)')
+  g.fillStyle = grad
+  g.fillRect(0, 0, 128, 128)
+  return new CanvasTexture(c)
 }
 
 function safeGet(k: string): string | null {

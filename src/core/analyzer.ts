@@ -1,4 +1,5 @@
 import { analyzeCircle } from './circle'
+import { classifyPolygon } from './shapes'
 import { linearAccelWorld } from './linear'
 import { rotate, type Quat, type Vec3 } from './quat'
 
@@ -18,7 +19,7 @@ export type Confidence = 'high' | 'medium' | 'rough'
 export interface TrikiEvent {
   /** секунды от начала потока */
   t: number
-  kind: 'posture' | 'rotate' | 'move' | 'lift' | 'circle'
+  kind: 'posture' | 'rotate' | 'move' | 'lift' | 'circle' | 'shape'
   text: string
   confidence: Confidence
   data?: {
@@ -32,6 +33,10 @@ export interface TrikiEvent {
     posture?: string
     tiltDeg?: number
     radiusCm?: number
+    shape?: 'square' | 'triangle'
+    /** сколько штрихов (сегментов движения) собрано в фигуру */
+    strokes?: number
+    perimeterCm?: number
   }
 }
 
@@ -58,6 +63,9 @@ const MOVE_MAX_ROT_DEG = 40 // сегмент, где жетон в основн
 const PREROLL = 12
 
 // круг: траектория за сегмент движения «намотала» >= 315° вокруг центра и достаточно круглая
+// фигуры: штрихи с паузой до CHAIN_GAP_S склеиваются в цепочку и проверяются на замкнутый квадрат/треугольник
+const CHAIN_GAP_S = 0.8
+const CHAIN_MAX_SEGS = 6
 const CIRCLE_MIN_DEG = 315
 const CIRCLE_MIN_RADIUS_M = 0.02
 const CIRCLE_MAX_RADIUS_M = 0.6
@@ -122,6 +130,10 @@ export class MotionAnalyzer {
   private moveStartQ: Quat = [1, 0, 0, 0]
   private moveRot = 0
   private tiltRot = 0
+  private moveStartT = 0
+  private chain: [number, number][] = []
+  private chainEndT = -1e9
+  private chainSegs = 0
 
   private vz = 0
   private lobeSign = 0
@@ -253,6 +265,7 @@ export class MotionAnalyzer {
       this.moveStartQ = q
       this.moveRot = 0
       this.tiltRot = 0
+      this.moveStartT = this.t - this.preRoll.length * dt
       return
     }
     this.moveBuf.push(linc)
@@ -283,7 +296,11 @@ export class MotionAnalyzer {
       pos = [pos[0] + (v[i][0] - vEnd[0] * k) * dt, pos[1] + (v[i][1] - vEnd[1] * k) * dt, pos[2] + (v[i][2] - vEnd[2] * k) * dt]
       path.push([pos[0], pos[1]])
     }
-    if (this.emitCircle(path, out)) return
+    if (this.emitShape(path, dt, out)) return
+    if (this.emitCircle(path, out)) {
+      this.resetChain()
+      return
+    }
     if (this.moveRot > MOVE_MAX_ROT_DEG) return // жетон крутили, а не двигали: ускорение в основном ошибка ориентации
     const cm: Vec3 = [pos[0] * 100, pos[1] * 100, pos[2] * 100]
     const { c, names, skipZ } = this.frame === 'body' ? this.toBody(cm) : { c: cm, names: WORLD_NAMES, skipZ: true }
@@ -301,6 +318,39 @@ export class MotionAnalyzer {
       confidence: 'rough',
       data: { dispCm: [c[0], c[1], skipZ ? 0 : c[2]] },
     })
+  }
+
+  private resetChain(): void {
+    this.chain = []
+    this.chainSegs = 0
+  }
+
+  /** Квадрат/треугольник в мировой плоскости XY из одного или нескольких штрихов. */
+  private emitShape(path: [number, number][], dt: number, out: TrikiEvent[]): boolean {
+    if (this.tiltRot > CIRCLE_MAX_TILT_ROT_DEG) {
+      this.resetChain()
+      return false
+    }
+    if (this.moveStartT - this.chainEndT > CHAIN_GAP_S || this.chainSegs >= CHAIN_MAX_SEGS) this.resetChain()
+    const base: [number, number] = this.chain.length ? this.chain[this.chain.length - 1] : [0, 0]
+    if (!this.chain.length) this.chain.push([0, 0])
+    for (const p of path) this.chain.push([base[0] + p[0], base[1] + p[1]])
+    this.chainSegs++
+    this.chainEndT = this.t - this.stillCount * dt
+
+    const r = classifyPolygon(this.chain)
+    if (!r) return false
+    const strokes = this.chainSegs
+    this.resetChain()
+    const name = r.shape === 'square' ? 'квадрат' : 'треугольник'
+    out.push({
+      t: this.t,
+      kind: 'shape',
+      text: `Фигура: ${name} ${r.ccw ? 'против часовой' : 'по часовой'} (${strokes > 1 ? strokes + ' штрихов, ' : ''}периметр ~${Math.round(r.perimeterM * 100)} см)`,
+      confidence: 'rough',
+      data: { shape: r.shape, dir: r.ccw ? 'ccw' : 'cw', strokes, perimeterCm: r.perimeterM * 100 },
+    })
+    return true
   }
 
   /** Круг в мировой плоскости XY (вид сверху): против часовой = положительная намотка. */
