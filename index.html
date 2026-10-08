@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: ws://localhost:* http://localhost:*; img-src 'self' data: blob:" />
+  <title>Triki demo</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Triki demo</h1>
+    <div class="controls">
+      <button id="connect">Подключить</button>
+      <button id="disconnect" disabled>Отключить</button>
+      <label>Частота
+        <select id="rate"></select>
+      </label>
+      <button id="rezero" disabled title="Положите жетон светодиодом от себя (в экран) и нажмите. Yaw дрейфует: магнитометра нет">Re-zero (LED от себя)</button>
+      <button id="led" disabled>Зелёный LED</button>
+      <label>beta <input id="beta" type="range" min="0.01" max="0.5" step="0.01" value="0.08" /><output id="betaOut">0.08</output></label>
+    </div>
+    <div id="status" class="status">Не подключено</div>
+  </header>
+  <p id="unsupported" class="warn" hidden>Web Bluetooth недоступен. Нужен Chrome или Edge по https или localhost.</p>
+  <main>
+    <section class="panel">
+      <h2>Ориентация</h2>
+      <div id="scene" class="scene"></div>
+      <p class="axes-legend"><b style="color:var(--x)">X</b> <b style="color:var(--y)">Y</b> <b style="color:var(--z)">Z</b> - оси датчика. Сетка - пол (мир). <button id="mount" type="button">Повернуть модель 90°</button></p>
+      <dl class="readout">
+        <dt>roll</dt><dd id="roll">-</dd>
+        <dt>pitch</dt><dd id="pitch">-</dd>
+        <dt>yaw</dt><dd id="yaw">-</dd>
+        <dt>Гц (факт)</dt><dd id="hz">-</dd>
+        <dt>батарея</dt><dd id="bat">-</dd>
+      </dl>
+      <h2>Состояние</h2>
+      <div class="chips"><span id="chipMove" class="chip">-</span><span id="chipPosture" class="chip">-</span><span id="chipTilt" class="chip">-</span></div>
+      <div class="frame-opts">
+        <label>Смещение
+          <select id="frame">
+            <option value="body">в осях жетона (верх = светодиод)</option>
+            <option value="world">в мировых осях (по heading)</option>
+          </select>
+        </label>
+      </div>
+      <h2>События <button id="clearLog" type="button" class="small">Очистить</button></h2>
+      <ul id="log" class="log"><li class="muted">Здесь появятся события: переворот, прокрут, смещение...</li></ul>
+      <p class="axes-legend">Точность: положение - высокая, прокрут - средняя (±5-10°), смещение - только грубая оценка коротких движений (десятки %). Не проверено на устройстве.</p>
+    </section>
+    <section class="charts">
+      <h2>Акселерометр, g <span class="legend"><i style="background:var(--x)"></i>X <i style="background:var(--y)"></i>Y <i style="background:var(--z)"></i>Z</span></h2>
+      <canvas id="acc"></canvas>
+      <h2>Гироскоп, °/с</h2>
+      <canvas id="gyro"></canvas>
+      <h2>Линейное ускорение в мировых осях, g (без гравитации)</h2>
+      <canvas id="lin"></canvas>
+      <h2>Комбо <button id="clearCombos" type="button" class="small">Очистить</button></h2>
+      <div id="combos" class="combos"></div>
+      <details class="vocab">
+        <summary>Что можно поймать (словарь жестов)</summary>
+        <div id="vocab"></div>
+      </details>
+    </section>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
