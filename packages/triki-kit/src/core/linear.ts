@@ -1,4 +1,4 @@
-import { rotate, type Quat, type Vec3 } from './quat'
+import { rotate, type Quat, type Vec3 } from './quat.js'
 
 /**
  * Линейное ускорение в мировых осях (g): поворачиваем показание акселерометра в мировую

@@ -1,4 +1,4 @@
-import type { Pt } from './circle'
+import type { Pt } from './circle.js'
 
 export interface PolygonShape {
   shape: 'square' | 'triangle'

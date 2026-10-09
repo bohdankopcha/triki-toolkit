@@ -1,4 +1,4 @@
-import { ACCEL_LSB_PER_G, FRAME_LEN, GYRO_LSB_PER_DPS, HEADER } from './protocol'
+import { ACCEL_LSB_PER_G, FRAME_LEN, GYRO_LSB_PER_DPS, HEADER } from './protocol.js'
 
 export interface Sample {
   /** deg/s */

@@ -1,4 +1,4 @@
-import { groupCombos, VOCAB, type Gesture } from '../core/gestures'
+import { groupCombos, VOCAB, type Gesture } from 'triki-kit'
 import { iconSvg } from './icons'
 
 const CAT: Record<string, string> = {

@@ -1,25 +1,25 @@
+import type { TrikiTransport, TrikiTransportHandlers } from '../transport.js'
 import {
   BATTERY_LEVEL, BATTERY_SERVICE, NUS_CTRL, NUS_RX, NUS_SERVICE, NUS_TX, startCmd, type RateHz,
-} from '../core/protocol'
+} from '../core/protocol.js'
 
-export interface TrikiHandlers {
-  onData(chunk: Uint8Array): void
-  onBattery(percent: number): void
-  onDisconnect(): void
-}
 
 /**
  * Тонкий слой над Web Bluetooth. Только чтение + две документированные записи:
  * команда старта IMU (RX) и флаг зелёного светодиода (ctrl). Больше ничего на устройство не шлём.
  */
-export class TrikiLink {
+export class WebBluetoothTransport implements TrikiTransport {
   private device: BluetoothDevice | null = null
   private rx: BluetoothRemoteGATTCharacteristic | null = null
   private ctrl: BluetoothRemoteGATTCharacteristic | null = null
-  constructor(private h: TrikiHandlers) {}
+  private h: TrikiTransportHandlers | null = null
 
   static supported(): boolean {
     return typeof navigator !== 'undefined' && !!navigator.bluetooth
+  }
+
+  attach(handlers: TrikiTransportHandlers): void {
+    this.h = handlers
   }
 
   get hasLed(): boolean {
@@ -75,21 +75,24 @@ export class TrikiLink {
 
   private onNotify = (e: Event): void => {
     const v = (e.target as BluetoothRemoteGATTCharacteristic).value
-    if (v) this.h.onData(new Uint8Array(v.buffer, v.byteOffset, v.byteLength))
+    if (v) this.h?.onData(new Uint8Array(v.buffer, v.byteOffset, v.byteLength))
   }
 
   private onGone = (): void => {
     this.rx = this.ctrl = null
-    this.h.onDisconnect()
+    this.h?.onDisconnect()
   }
 
   private async readBattery(gatt: BluetoothRemoteGATTServer): Promise<void> {
     try {
       const c = await (await gatt.getPrimaryService(BATTERY_SERVICE)).getCharacteristic(BATTERY_LEVEL)
       const v = await c.readValue()
-      if (v.byteLength) this.h.onBattery(v.getUint8(0))
+      if (v.byteLength) this.h?.onBattery(v.getUint8(0))
     } catch {
       /* батарейного сервиса может не быть */
     }
   }
 }
+
+/** Безопасно вызывать при SSR: возвращает false вне браузера. */
+export const isWebBluetoothSupported = (): boolean => WebBluetoothTransport.supported()

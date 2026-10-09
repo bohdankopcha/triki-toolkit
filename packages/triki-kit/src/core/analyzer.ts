@@ -1,12 +1,12 @@
-import { analyzeCircle } from './circle'
-import { classifyPolygon } from './shapes'
-import { linearAccelWorld } from './linear'
-import { rotate, type Quat, type Vec3 } from './quat'
+import { analyzeCircle } from './circle.js'
+import { classifyPolygon } from './shapes.js'
+import { linearAccelWorld } from './linear.js'
+import { rotate, type Quat, type Vec3 } from './quat.js'
 
 export type DispFrame = 'world' | 'body'
 /** «Верх» жетона = светодиод, над логотипом Ż: ось -Y датчика, в плоскости платы [x, y]. Это данность, не настройка. */
 export const LED_UP: readonly [number, number] = [0, -1]
-import type { Sample } from './parser'
+import type { Sample } from './parser.js'
 
 const G = 9.80665
 const RAD2DEG = 180 / Math.PI
@@ -40,9 +40,11 @@ export interface TrikiEvent {
   }
 }
 
+export type PostureName = 'flat' | 'tilted' | 'edge' | 'tilted-down' | 'flipped'
+
 export interface AnalyzerState {
   moving: boolean
-  posture: string
+  posture: PostureName
   tiltDeg: number
 }
 
@@ -90,7 +92,7 @@ function classify(tilt: number, prev: number): number {
   return idx
 }
 
-const POSTURE_NAMES = ['flat', 'tilted', 'edge', 'tilted-down', 'flipped']
+const POSTURE_NAMES = ['flat', 'tilted', 'edge', 'tilted-down', 'flipped'] as const
 
 /**
  * Состояния и события поверх ориентации: покой/движение, положение, прокрут (интеграл гироскопа

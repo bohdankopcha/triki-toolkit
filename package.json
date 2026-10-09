@@ -1,22 +1,19 @@
 {
-  "name": "triki-browser-poc",
+  "name": "triki-workspace",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
+    "dev": "npm run dev -w triki-demo",
+    "build": "npm run build -w triki-kit && npm run build -w triki-demo",
+    "typecheck": "npm run typecheck -w triki-kit && npm run typecheck -w triki-demo",
     "test": "vitest run"
   },
   "devDependencies": {
-    "@types/three": "^0.186.0",
     "@types/web-bluetooth": "^0.0.21",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.3"
-  },
-  "dependencies": {
-    "three": "^0.186.1"
   }
 }

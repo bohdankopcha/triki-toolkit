@@ -1,4 +1,4 @@
-import type { Dir, TrikiEvent } from './analyzer'
+import type { Dir, TrikiEvent } from './analyzer.js'
 
 /**
  * Дискретные жесты поверх событий анализатора. Значения квантуются, поэтому набор конечен и стабилен:
@@ -17,6 +17,8 @@ export interface Gesture {
   /** секунды от начала потока */
   t: number
   label: string
+  /** сколько предыдущих жестов этот заменил (переворот заменяет прокрут на 180°, фигура заменяет штрихи) */
+  replaces?: number
 }
 
 export const ANGLES = [45, 90, 135, 180, 270, 360, 540, 720] as const
@@ -74,12 +76,16 @@ export class GestureMapper {
       case 'shape': {
         if (!d?.shape || !d.dir) return false
         // штрихи, из которых сложилась фигура, уже ушли в ленту как смещения: убираем их
+        let replaces = 0
         for (let n = (d.strokes ?? 1) - 1; n > 0; n--) {
           const last = this.list.at(-1)
-          if (last && (last.kind === 'slide' || last.kind === 'push') && ev.t - last.t <= 8) this.list.pop()
+          if (last && (last.kind === 'slide' || last.kind === 'push') && ev.t - last.t <= 8) {
+            this.list.pop()
+            replaces++
+          }
         }
         const name = d.shape === 'square' ? 'Квадрат' : 'Треугольник'
-        return this.add(make(d.shape, ev.t, `${name} ${DIR_RU[d.dir]}`, d.dir))
+        return this.add({ ...make(d.shape, ev.t, `${name} ${DIR_RU[d.dir]}`, d.dir), replaces })
       }
       case 'posture':
         return this.posture(ev)
@@ -120,7 +126,7 @@ export class GestureMapper {
       const last = this.list.at(-1)
       // поворот на 180° вокруг оси в плоскости платы + смена стороны = один переворот
       if (last?.kind === 'roll' && last.value === 180 && ev.t - last.t <= 2) {
-        this.list[this.list.length - 1] = make('flip', last.t, `Переворот (${ROLL_RU[last.dir!]})`, last.dir)
+        this.list[this.list.length - 1] = { ...make('flip', last.t, `Переворот (${ROLL_RU[last.dir!]})`, last.dir), replaces: 1 }
         return true
       }
       return this.add(make('flip', ev.t, 'Переворот'))

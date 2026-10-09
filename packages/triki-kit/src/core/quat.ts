@@ -40,3 +40,20 @@ export function toMatrix(q: Quat): number[] {
     2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y),
   ]
 }
+
+export interface TiltAngles {
+  /** градусы; roll/pitch из направления «вверх» датчика, yaw - heading (дрейфует: магнитометра нет) */
+  rollDeg: number
+  pitchDeg: number
+  yawDeg: number
+}
+
+export function tiltAngles(q: Quat): TiltAngles {
+  const up = rotate(q, [0, 0, 1])
+  const deg = 180 / Math.PI
+  return {
+    rollDeg: Math.atan2(up[1], up[2]) * deg,
+    pitchDeg: Math.asin(Math.max(-1, Math.min(1, up[0]))) * deg,
+    yawDeg: yawOf(q) * deg,
+  }
+}

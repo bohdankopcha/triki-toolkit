@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Dir, TrikiEvent } from './analyzer'
-import { GestureMapper, groupCombos, snap, ANGLES, DISTANCES, VOCAB } from './gestures'
+import type { Dir, TrikiEvent } from './analyzer.js'
+import { GestureMapper, groupCombos, snap, ANGLES, DISTANCES, VOCAB } from './gestures.js'
 
 const rot = (t: number, angleDeg: number, dir: Dir, complex = false): TrikiEvent => ({
   t, kind: 'rotate', text: '', confidence: 'medium', data: { angleDeg, dir, complex },

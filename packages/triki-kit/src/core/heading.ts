@@ -1,4 +1,4 @@
-import { quatAboutZ, rotate, type Quat } from './quat'
+import { quatAboutZ, rotate, type Quat } from './quat.js'
 
 /**
  * Поправка yaw, после которой светодиод жетона смотрит в мировую +Y («от пользователя, в экран»).

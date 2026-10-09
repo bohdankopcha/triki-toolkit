@@ -8,7 +8,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "skipLibCheck": true,
-    "types": ["web-bluetooth", "vite/client"]
+    "types": ["web-bluetooth", "vite/client"],
+    "paths": { "triki-kit": ["../../packages/triki-kit/src/index.ts"] }
   },
   "include": ["src"]
 }

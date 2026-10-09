@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { MotionAnalyzer, type TrikiEvent } from './analyzer'
-import { ledAwayOffset } from './heading'
-import type { Sample } from './parser'
-import { quatAboutZ, quatMul, rotate, type Quat } from './quat'
+import { MotionAnalyzer, type TrikiEvent } from './analyzer.js'
+import { ledAwayOffset } from './heading.js'
+import type { Sample } from './parser.js'
+import { quatAboutZ, quatMul, rotate, type Quat } from './quat.js'
 
 const DT = 1 / 104
 const FLAT: Quat = [1, 0, 0, 0]

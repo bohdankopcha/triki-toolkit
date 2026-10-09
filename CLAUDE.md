@@ -82,3 +82,10 @@
 - Общение на русском.
 - Вместо длинного тире использовать обычный дефис "-".
 - Пользователь: frontend-инженер (React, TypeScript, Next.js), macOS.
+
+## Структура проекта (npm workspaces)
+
+- `packages/triki-kit` - переиспользуемый пакет: `src/core` (чистое ядро: парсер, Madgwick, анализатор, жесты, без DOM и BLE), `src/transports` (Web Bluetooth), `src/triki.ts` (класс `Triki`, подписки и состояние), `src/react.ts` (хук, вход `triki-kit/react`). Документация: `packages/triki-kit/README.md`. Импорты внутри пакета с расширением `.js` (NodeNext).
+- `apps/demo` - демо на Vite, пользуется только публичным API пакета (в dev берёт исходники через alias, сборка пакета не нужна).
+- Команды из корня: `npm run dev`, `npm test`, `npm run typecheck`, `npm run build`.
+- Новые жесты и детекторы добавлять в `core` с тестами на синтетике; затем завести вид в `VOCAB` и иконку в `apps/demo/src/ui/icons.ts`.

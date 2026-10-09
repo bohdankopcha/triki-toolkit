@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { FrameParser } from './parser'
-import { startCmd } from './protocol'
-import { Madgwick } from './madgwick'
-import { linearAccelWorld } from './linear'
-import { rotate, quatAboutZ, yawOf } from './quat'
+import { FrameParser } from './parser.js'
+import { startCmd } from './protocol.js'
+import { Madgwick } from './madgwick.js'
+import { linearAccelWorld } from './linear.js'
+import { rotate, quatAboutZ, yawOf } from './quat.js'
 
 function frame(gx: number, gy: number, gz: number, ax: number, ay: number, az: number): Uint8Array {
   const b = new Uint8Array(14)

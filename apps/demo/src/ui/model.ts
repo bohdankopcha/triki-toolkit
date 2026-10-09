@@ -3,7 +3,7 @@ import {
   MeshBasicMaterial, PerspectiveCamera, PointLight, Scene, SphereGeometry, Sprite, SpriteMaterial, WebGLRenderer,
 } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import type { Quat } from '../core/quat'
+import type { Quat } from 'triki-kit'
 
 /**
  * Three.js-сцена с моделью Triki. Мир (как в ядре): Z вверх; three: Y вверх. Поэтому root повёрнут на -90° по X.

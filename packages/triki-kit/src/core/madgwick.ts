@@ -1,4 +1,4 @@
-import type { Quat } from './quat'
+import type { Quat } from './quat.js'
 
 const DEG2RAD = Math.PI / 180
 

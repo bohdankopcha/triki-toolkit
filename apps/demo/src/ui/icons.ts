@@ -1,5 +1,5 @@
-import type { Dir } from '../core/analyzer'
-import type { GestureKind } from '../core/gestures'
+import type { Dir } from 'triki-kit'
+import type { GestureKind } from 'triki-kit'
 
 /** Иконки жестов: статичные SVG-строки из констант (пользовательских данных внутри нет). */
 const DEG: Partial<Record<Dir, number>> = {

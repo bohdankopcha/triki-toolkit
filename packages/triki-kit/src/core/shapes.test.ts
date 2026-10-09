@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { MotionAnalyzer, type TrikiEvent } from './analyzer'
-import { classifyPolygon } from './shapes'
-import { GestureMapper } from './gestures'
-import type { Pt } from './circle'
-import type { Sample } from './parser'
+import { MotionAnalyzer, type TrikiEvent } from './analyzer.js'
+import { classifyPolygon } from './shapes.js'
+import { GestureMapper } from './gestures.js'
+import type { Pt } from './circle.js'
+import type { Sample } from './parser.js'
 
 const DT = 1 / 104
 const G = 9.80665
