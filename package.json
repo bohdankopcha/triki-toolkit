@@ -8,7 +8,9 @@
     "dev": "npm run dev -w triki-demo",
     "build": "npm run build -w triki-kit && npm run build -w triki-demo",
     "typecheck": "npm run typecheck -w triki-kit && npm run typecheck -w triki-demo",
-    "test": "vitest run"
+    "test": "vitest run",
+    "analyze": "vitest run scripts/recordings.test.ts",
+    "tune": "vitest run scripts/tune.test.ts"
   },
   "devDependencies": {
     "@types/web-bluetooth": "^0.0.21",

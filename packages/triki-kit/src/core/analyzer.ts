@@ -48,6 +48,14 @@ export interface AnalyzerState {
   tiltDeg: number
 }
 
+// смещение нуля гироскопа: окно разброса, порог «тихо», насколько далеко от оценки ещё верим, постоянная времени
+const BIAS_WIN_S = 0.15
+const BIAS_QUIET_DPS = 0.6
+const BIAS_NEAR_DPS = 1
+const BIAS_CONVERGE_S = 1
+const BIAS_TAU_S = 3
+const BIAS_RELOCK_S = 1.5
+
 const POSTURE_BOUNDS = [15, 75, 105, 165] // градусы наклона оси Z датчика от вертикали
 const POSTURE_HYST = 5
 const POSTURE_HOLD_S = 0.35
@@ -115,6 +123,12 @@ export class MotionAnalyzer {
 
   private t = 0
   private bias: Vec3 = [0, 0, 0]
+  /** сырые показания гироскопа за последние BIAS_WIN_S: по их разбросу видно, лежит ли жетон по-настоящему */
+  private gWin: Vec3[] = []
+  /** сколько секунд тихого покоя уже ушло на оценку смещения */
+  private biasS = 0
+  /** сколько секунд подряд гироскоп тихий */
+  private quietS = 0
   private linBias: Vec3 = [0, 0, 0]
   private stillCount = 0
 
@@ -164,10 +178,10 @@ export class MotionAnalyzer {
 
     const still = gm < 5 && Math.abs(amag - 1) < 0.04 && (linm < 0.05 || !ready)
     this.stillCount = still ? this.stillCount + 1 : 0
+    this.updateBias(s, amag, dt)
     if (still) {
-      // в покое подстраиваем смещение нуля гироскопа и остаточное «линейное» ускорение (ошибка наклона)
+      // в покое подстраиваем остаточное «линейное» ускорение (ошибка наклона)
       const a = Math.min(1, dt / 0.8)
-      this.bias = [0, 1, 2].map((i) => this.bias[i] + ([s.gx, s.gy, s.gz][i] - this.bias[i]) * a) as unknown as Vec3
       if (this.stillCount * dt > 0.15 || !ready) {
         this.linBias = [0, 1, 2].map((i) => this.linBias[i] + (lin[i] - this.linBias[i]) * a) as unknown as Vec3
       }
@@ -179,6 +193,40 @@ export class MotionAnalyzer {
     this.updateMove(linc, linm, g, gm, q, dt, ready, out)
     this.updateLift(linc[2], gm, dt, ready, out)
     return out
+  }
+
+  /**
+   * Смещение нуля гироскопа. Оно стабильно (у живого жетона около 3 °/с и почти не меняется за сессию), поэтому
+   * подстраиваем его только в «тихом» покое: малый разброс сырых показаний за окно и среднее рядом с текущей оценкой.
+   * Иначе медленное скольжение или палец на жетоне (настоящие повороты 1-5 °/с) впитываются в смещение, и ошибка
+   * 0.5 °/с за двухсекундное движение наклоняет ориентацию на градус: это ~0.02 g ложного ускорения.
+   * Если же гироскоп долго (BIAS_RELOCK_S) тихий, но далеко от оценки - неверна сама оценка (например, при подключении
+   * жетон держали в руке и плавно поворачивали): тогда переучиваемся. Без этого ошибка смещения оставалась навсегда,
+   * и направление (yaw) уплывало на градусы в секунду, за минуту разворачивая оси.
+   */
+  private updateBias(s: Sample, amag: number, dt: number): void {
+    this.gWin.push([s.gx, s.gy, s.gz])
+    const n = Math.max(3, Math.round(BIAS_WIN_S / dt))
+    if (this.gWin.length > n) this.gWin.splice(0, this.gWin.length - n)
+    if (this.gWin.length < n || Math.abs(amag - 1) > 0.04) {
+      this.quietS = 0
+      return
+    }
+    const m = [0, 1, 2].map((k) => this.gWin.reduce((acc, w) => acc + w[k], 0) / n)
+    const sd = Math.sqrt(this.gWin.reduce((acc, w) => acc + (w[0] - m[0]) ** 2 + (w[1] - m[1]) ** 2 + (w[2] - m[2]) ** 2, 0) / n)
+    const converged = this.biasS > BIAS_CONVERGE_S
+    const near = Math.hypot(m[0] - this.bias[0], m[1] - this.bias[1], m[2] - this.bias[2]) < BIAS_NEAR_DPS
+    if (sd > BIAS_QUIET_DPS) {
+      this.quietS = 0
+      return
+    }
+    this.quietS += dt
+    const relock = this.quietS > BIAS_RELOCK_S
+    if (converged && !near && !relock) return
+    // долгий тихий покой (жетон лежит) - самый надёжный момент: сходимся быстро; короткие паузы - медленно
+    const a = Math.min(1, dt / (!converged ? 0.3 : relock ? 0.5 : BIAS_TAU_S))
+    this.bias = [0, 1, 2].map((i) => this.bias[i] + ([s.gx, s.gy, s.gz][i] - this.bias[i]) * a) as unknown as Vec3
+    this.biasS += dt
   }
 
   private updatePosture(q: Quat, dt: number, ready: boolean, out: TrikiEvent[]): void {

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: ws://localhost:* http://localhost:*; img-src 'self' data: blob:" />
+  <title>Triki 2D experiment</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header>
+    <h1>2D-эксперимент <a class="nav" href="/position.html">← позиция</a> <a class="nav" href="/">демо жестов</a></h1>
+    <div class="controls">
+      <button id="connect">Подключить</button>
+      <button id="disconnect" disabled>Отключить</button>
+      <button id="rezero" disabled title="Жетон лежит светодиодом от себя: выровнять оси">Re-zero (LED от себя)</button>
+      <span class="sep"></span>
+      <button id="start" disabled>Начать</button>
+      <button id="undo" disabled title="Backspace: шаг засчитан неправильно, повторить его">Отменить шаг</button>
+      <button id="skip" disabled title="Пробел: шаг не засчитался, пропустить">Пропустить</button>
+    </div>
+    <div id="status" class="status">Не подключено</div>
+  </header>
+  <p id="unsupported" class="warn" hidden>Web Bluetooth недоступен. Нужен Chrome или Edge по https или localhost.</p>
+  <main class="pos-main">
+    <section class="panel">
+      <div id="prompt" class="prompt">
+        <div class="prompt-arrow" id="arrow"></div>
+        <div>
+          <div class="prompt-step" id="stepNo">Подготовка</div>
+          <div class="prompt-text" id="stepText">Подключите жетон и положите его на стол светодиодом от себя</div>
+        </div>
+      </div>
+      <canvas id="plane" class="plane"></canvas>
+      <p class="axes-legend">Вид сверху на стол: вверх - от вас. Сетка 5 см. Синяя линия - путь, точки - остановки, пунктир - куда двигать дальше, треугольник - куда смотрит светодиод.</p>
+    </section>
+    <section class="charts">
+      <h2>Как проходить</h2>
+      <ol class="howto">
+        <li>Жетон лежит на столе светодиодом от вас, не крутите его во время эксперимента.</li>
+        <li>Каждое движение - по столу, примерно на ширину ладони (15-20 см), затем остановка на секунду. Шаг засчитается сам.</li>
+        <li>Движения идут парами туда-обратно: после пары жетон должен вернуться в ту же точку (сантиметры не важны).</li>
+        <li>Засчиталось не то - «Отменить шаг» (Backspace). Не засчиталось - «Пропустить» (пробел).</li>
+        <li>В конце запись сама сохранится в репозиторий.</li>
+      </ol>
+      <h2>Итог</h2>
+      <dl class="readout">
+        <dt>направление</dt><dd id="sAngle">-</dd>
+        <dt>невозврат пары</dt><dd id="sClosure">-</dd>
+        <dt>конец от начала</dt><dd id="sFinal">-</dd>
+        <dt>запись</dt><dd id="sSaved">-</dd>
+      </dl>
+      <h2>Шаги</h2>
+      <table class="steps">
+        <thead><tr><th>#</th><th>куда</th><th>длина</th><th>угол</th><th>пара</th></tr></thead>
+        <tbody id="steps"></tbody>
+      </table>
+      <p><button id="download" type="button" class="small" disabled title="Сохранить сырые данные с момента подключения в recordings/ (в любой момент)">Сохранить запись</button></p>
+    </section>
+  </main>
+  <script type="module" src="/src/experiment/main.ts"></script>
+</body>
+</html>

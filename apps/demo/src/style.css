@@ -59,3 +59,27 @@ button.small { padding: 1px 8px; font-size: 12px; margin-left: 8px; }
 .vocab-icons { display: flex; flex-wrap: wrap; gap: 4px; flex: none; max-width: 330px; }
 .vocab-icons .tok { min-height: 40px; width: 40px; padding: 4px 0; }
 .vocab-icons .tok svg { width: 22px; height: 22px; }
+
+/* страница позиции */
+.nav { font-size: 13px; font-weight: 400; margin-left: 12px; color: var(--z); }
+header .controls + .controls { margin-top: 8px; }
+.pos-main { grid-template-columns: minmax(0, 1fr) minmax(0, 420px); }
+.pos-scene { height: calc(100vh - 220px); min-height: 420px; }
+.readout dd.hot { color: var(--x); }
+@media (max-width: 900px) { .pos-main { grid-template-columns: minmax(0, 1fr); } .pos-scene { height: 420px; } }
+
+/* 2D-эксперимент */
+.controls .sep { width: 1px; height: 22px; background: var(--border); }
+.prompt { display: flex; gap: 16px; align-items: center; padding: 10px 14px; margin-bottom: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; }
+.prompt.flash { animation: flash .5s ease-out; }
+@keyframes flash { from { border-color: var(--y); box-shadow: 0 0 0 3px var(--y); } to { box-shadow: none; } }
+.prompt-arrow { font-size: 56px; line-height: 1; width: 64px; text-align: center; color: var(--y); flex: none; }
+.prompt-step { color: var(--muted); font-size: 13px; }
+.prompt-text { font-size: 20px; font-weight: 600; }
+.plane { width: 100%; height: calc(100vh - 300px); min-height: 380px; }
+.howto { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13px; }
+.howto li { margin: 3px 0; }
+.steps { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--bg); border-radius: 6px; }
+.steps th, .steps td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+.steps th { color: var(--muted); font-weight: 500; }
+.steps td:nth-child(n+3) { font-family: ui-monospace, monospace; }

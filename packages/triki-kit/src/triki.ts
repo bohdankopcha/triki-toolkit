@@ -70,6 +70,11 @@ export interface TrikiState {
 
 export interface TrikiEventMap {
   sample: TrikiSample
+  /**
+   * Сырой кусок notification до разбора и время прихода (мс, часы `now`). Для записи сессии и точного повтора:
+   * `push(bytes)` с теми же временами воспроизводит обработку бит в бит. Буфер может переиспользоваться: копируйте.
+   */
+  raw: { bytes: Uint8Array; t: number }
   /** событие анализатора со структурными данными, текстом и уверенностью */
   event: TrikiEvent
   /** дискретный квантованный жест (см. VOCAB) */
@@ -105,6 +110,8 @@ export class Triki {
   private autoAligned = false
   private hzCount = 0
   private hzSince: number
+  private rateStart: number | null = null
+  private rateFrames = 0
   private gestureVersion = 0
   private lastSample: TrikiSample | null = null
 
@@ -261,10 +268,13 @@ export class Triki {
 
   /** Скормить сырой кусок notification (его обычно вызывает транспорт). Кадры могут быть разрезаны. */
   push(chunk: Uint8Array): void {
+    // время читаем один раз: им же считается частота, поэтому повтор записи совпадает бит в бит
+    const t = this.now()
+    this.emitter.emit('raw', { bytes: chunk, t })
     const samples = this.parser.push(chunk)
     if (!samples.length) return
     for (const s of samples) this.process(s, this.dt, true)
-    this.tickRate()
+    this.tickRate(samples.length, t)
     this.syncAnalyzerState()
   }
 
@@ -309,6 +319,8 @@ export class Triki {
     this.autoAligned = false
     this.hzCount = 0
     this.hzSince = this.now()
+    this.rateStart = null
+    this.rateFrames = 0
     this.clock += SESSION_GAP_S // жесты разных сессий не склеиваются в одно комбо
     this.timeBase = this.clock
     this.lastSample = null
@@ -353,17 +365,29 @@ export class Triki {
     this.rezero()
   }
 
-  /** Реальный шаг между кадрами = время / число кадров за окно: пачки BLE и потери кадров искажают номинал. */
-  private tickRate(): void {
-    const now = this.now()
+  /**
+   * Реальный шаг между кадрами = время / число кадров. Считаем по всему потоку, а не по секундным окнам: кадры приходят
+   * пачками, и в окне их число скачет на целую пачку (несколько процентов). Такая ошибка шага умножается на угол
+   * поворота и портит наклон, а через него линейное ускорение. Частота для показа - по последней секунде.
+   */
+  private tickRate(frames: number, now: number): void {
+    if (this.rateStart === null) {
+      // кадры этой пачки пришли до начала отсчёта. Окна тоже считаем от первой пачки, а не от connect: так обработка
+      // зависит только от времён прихода данных и повтор записи совпадает с живой сессией бит в бит
+      this.rateStart = now
+      this.hzSince = now
+      this.hzCount = 0
+      return
+    }
+    this.rateFrames += frames
     const el = now - this.hzSince
     if (el < 1000) return
-    if (this.hzCount > 20) {
-      const rate = this.draft.rateHz
-      const meas = el / 1000 / this.hzCount
-      this.dt = Math.min(2 / rate, Math.max(0.5 / rate, this.dt * 0.5 + meas * 0.5))
-      this.set({ measuredHz: Math.round((this.hzCount * 1000) / el) })
+    const rate = this.draft.rateHz
+    if (this.rateFrames > 2 * rate) {
+      const meas = (now - this.rateStart) / 1000 / this.rateFrames
+      this.dt = Math.min(1.25 / rate, Math.max(0.8 / rate, meas))
     }
+    if (this.hzCount > 20) this.set({ measuredHz: Math.round((this.hzCount * 1000) / el) })
     this.hzCount = 0
     this.hzSince = now
   }

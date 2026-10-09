@@ -88,4 +88,6 @@
 - `packages/triki-kit` - переиспользуемый пакет: `src/core` (чистое ядро: парсер, Madgwick, анализатор, жесты, без DOM и BLE), `src/transports` (Web Bluetooth), `src/triki.ts` (класс `Triki`, подписки и состояние), `src/react.ts` (хук, вход `triki-kit/react`). Документация: `packages/triki-kit/README.md`. Импорты внутри пакета с расширением `.js` (NodeNext).
 - `apps/demo` - демо на Vite, пользуется только публичным API пакета (в dev берёт исходники через alias, сборка пакета не нужна).
 - Команды из корня: `npm run dev`, `npm test`, `npm run typecheck`, `npm run build`.
+- `apps/demo/position.html` - позиция в 3D (`PositionTracker`, ZUPT). `apps/demo/experiment.html` - 2D-эксперимент: пользователь делает 16 движений по подсказке, сырой BLE-поток с метками сохраняется в `recordings/` (dev-плагин в `apps/demo/vite.config.ts`).
+- Отладка позиции по реальным данным: `npm run analyze` (`scripts/recordings.test.ts`) повторяет записи бит в бит тем же кодом (`replayRecording` + `PositionPipeline`) и пишет `recordings/report.md`. Метрики: угол движения к ожидаемому, невозврат после пары туда-обратно, конец от начала. Это и регрессионный тест (пороги качества). Подбор опций трекера на записях: `npm run tune` с `VARIANTS`.
 - Новые жесты и детекторы добавлять в `core` с тестами на синтетике; затем завести вид в `VOCAB` и иконку в `apps/demo/src/ui/icons.ts`.

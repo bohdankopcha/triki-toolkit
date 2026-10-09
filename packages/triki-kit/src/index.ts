@@ -4,3 +4,6 @@ export type { TrikiOptions, TrikiSample, TrikiState, TrikiStatus, TrikiEventMap 
 export { Emitter } from './emitter.js'
 export type { TrikiTransport, TrikiTransportHandlers } from './transport.js'
 export { WebBluetoothTransport, isWebBluetoothSupported } from './transports/web-bluetooth.js'
+export { Recorder, replayRecording } from './recording.js'
+export type { TrikiRecording, RecordingMark, ReplayHandlers } from './recording.js'
+export { PositionPipeline } from './position-pipeline.js'

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: ws://localhost:* http://localhost:*; img-src 'self' data: blob:" />
+  <title>Triki position POC</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Позиция жетона (POC) <a class="nav" href="/">← демо жестов</a> <a class="nav" href="/experiment.html">2D-эксперимент →</a></h1>
+    <div class="controls">
+      <button id="connect">Подключить</button>
+      <button id="disconnect" disabled>Отключить</button>
+      <label>Частота <select id="rate"></select></label>
+      <button id="zero" title="Текущая точка становится началом координат">Обнулить позицию</button>
+      <button id="rezero" disabled title="Жетон лежит светодиодом от себя: выровнять направление осей X/Y">Re-zero (LED от себя)</button>
+      <label title="Вертикаль не интегрируется: меньше дрейфа, когда жетон двигают по столу"><input id="planar" type="checkbox" checked /> Только плоскость стола</label>
+    </div>
+    <div class="controls">
+      <label>Вид
+        <select id="view">
+          <option value="persp">3D</option>
+          <option value="top">сверху (X, Y)</option>
+          <option value="front">спереди (X, Z)</option>
+        </select>
+      </label>
+      <label><input id="follow" type="checkbox" /> Камера за жетоном</label>
+      <span class="sep"></span>
+      <button id="save" title="Сохранить сырые данные с момента подключения в recordings/ для разбора">Сохранить запись</button>
+      <span id="saved" class="muted-text"></span>
+    </div>
+    <div id="status" class="status">Не подключено</div>
+  </header>
+  <p id="unsupported" class="warn" hidden>Web Bluetooth недоступен. Нужен Chrome или Edge по https или localhost.</p>
+  <main class="pos-main">
+    <section class="panel">
+      <div id="scene" class="scene pos-scene"></div>
+      <p class="axes-legend">Мир: <b style="color:var(--x)">X</b> вправо, <b style="color:var(--y)">Y</b> от вас, <b style="color:var(--z)">Z</b> вверх. Сетка: 1 м с шагом 10 см, в центре 20 см с шагом 1 см. Синяя линия - путь, точки - остановки, в которых позиция уточняется.</p>
+    </section>
+    <section class="charts">
+      <h2>Позиция</h2>
+      <dl class="readout">
+        <dt>x, y, z</dt><dd id="pos">-</dd>
+        <dt>состояние</dt><dd id="state">-</dd>
+      </dl>
+      <h2>Последнее движение</h2>
+      <dl class="readout">
+        <dt>смещение</dt><dd id="segD">-</dd>
+        <dt>длительность</dt><dd id="segT">-</dd>
+      </dl>
+      <h2>Скорость</h2>
+      <dl class="readout">
+        <dt>частота (факт)</dt><dd id="hz">-</dd>
+        <dt>пачки BLE</dt><dd id="burst" title="Интервал между notification и кадров в пачке: это главный вклад в задержку">-</dd>
+        <dt>возраст на экране</dt><dd id="age" title="Сколько прошло от прихода последнего кадра до отрисовки">-</dd>
+        <dt>расчёт позиции</dt><dd id="cost">-</dd>
+      </dl>
+      <h2>Движения <button id="clearLog" type="button" class="small">Очистить</button></h2>
+      <ul id="log" class="log"><li class="muted">Подвигайте жетон по столу и остановитесь: здесь появится смещение. Проверьте линейкой.</li></ul>
+      <p class="axes-legend">Позиция = двойной интеграл ускорения. Надёжна только для коротких движений с остановками, порядка 10-30 см и до ~2-3 с. Непрерывное движение без остановок уплывает за секунды. Yaw дрейфует: направления X/Y со временем поворачиваются, лечится Re-zero.</p>
+    </section>
+  </main>
+  <script type="module" src="/src/position/main.ts"></script>
+</body>
+</html>
